@@ -12,7 +12,7 @@ class ScrollableCheckBoxFrame(customtkinter.CTkScrollableFrame):
 
     def add_item(self, item):
         checkbox = customtkinter.CTkCheckBox(self, text=item)
-        checkbox.grid(row=len(self.checkbox_list), column=0, pady=(0, 10))
+        checkbox.grid(row=len(self.checkbox_list), column=0, sticky="w", padx=10)
         checkbox.bind("<Button-1>", lambda event, text=item: self.copy_to_clipboard(text))
         self.checkbox_list.append(checkbox)
 
@@ -37,7 +37,7 @@ class App(customtkinter.CTk):
 
         self.scrollable_checkbox_frame = ScrollableCheckBoxFrame(master=self, width=200,
                                                                  item_list=[f"item {i}" for i in range(0)])
-        self.scrollable_checkbox_frame.grid(row=0, column=0, padx=15, pady=15, sticky="ns")
+        self.scrollable_checkbox_frame.grid(row=0, column=0, padx=15, pady=15, sticky="w")
 
         self.monitor_clipboard()
 
@@ -54,7 +54,7 @@ class App(customtkinter.CTk):
     def checkbox_frame_event(self):
         selected_item = self.scrollable_checkbox_frame.get_checked_items()
         if selected_item:
-            pyperclip.copy(selected_item[0])  # Copy the first selected item to clipboard
+            pyperclip.copy(selected_item[0])
 
 
 if __name__ == "__main__":
