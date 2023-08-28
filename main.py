@@ -12,15 +12,29 @@ class ScrollableCheckBoxFrame(customtkinter.CTkScrollableFrame):
 
     def add_item(self, item):
         checkbox = customtkinter.CTkCheckBox(self, text=item)
-        checkbox.grid(row=len(self.checkbox_list), column=0, sticky="w", padx=10, pady=5)  # Added pady=5
+        checkbox.grid(row=len(self.checkbox_list), column=0, sticky="w", padx=10, pady=5)
         checkbox.bind("<Button-1>", lambda event, text=item: self.copy_to_clipboard(text))
         self.checkbox_list.append(checkbox)
 
     def copy_to_clipboard(self, text):
-        pyperclip.copy(text)
+        stripped_text = text.strip()
+        pyperclip.copy(stripped_text)
 
     def get_checked_items(self):
         return [checkbox.cget("text") for checkbox in self.checkbox_list if checkbox.get() == 1]
+
+    def remove_selected_items(self):
+        selected_items = self.get_checked_items()
+        for checkbox in self.checkbox_list[:]:
+            if checkbox.cget("text") in selected_items:
+                self.remove_item(checkbox.cget("text"))
+
+    def remove_item(self, item):
+        for checkbox in self.checkbox_list:
+            if item == checkbox.cget("text"):
+                checkbox.destroy()
+                self.checkbox_list.remove(checkbox)
+                return
 
     def add_copied_item(self, text):
         if text not in [checkbox.cget("text") for checkbox in self.checkbox_list]:
@@ -33,11 +47,21 @@ class App(customtkinter.CTk):
 
         self.title("Clipboard Manager")
         self.grid_rowconfigure(0, weight=1)
-        self.columnconfigure(2, weight=1)
+        self.geometry("450x300")
+        self.is_always_on_top = False
+        self.resizable(False, False)  # Disable window resizing
 
-        self.scrollable_checkbox_frame = ScrollableCheckBoxFrame(master=self, width=200,
+        self.scrollable_checkbox_frame = ScrollableCheckBoxFrame(master=self, width=400,
                                                                  item_list=[f"item {i}" for i in range(0)])
-        self.scrollable_checkbox_frame.grid(row=0, column=0, padx=15, pady=15, sticky="ns")
+        self.scrollable_checkbox_frame.grid(row=0, column=0, padx=15, pady=15, sticky="w")
+
+        self.monitor_clipboard()
+        self.delete_button = customtkinter.CTkButton(self, text="Delete Selected Items", command=self.delete_selected_items,fg_color="#AD0000", hover_color="#AD0000")
+        self.delete_button.grid(row=1, column=0, padx=15, pady=5, sticky="w")
+
+
+        self.toggle_top_button = customtkinter.CTkButton(self, text="Toggle Always On Top", command=self.toggle_always_on_top)
+        self.toggle_top_button.grid(row=2, column=0, padx=15, pady=5, sticky="w")
 
         self.monitor_clipboard()
 
@@ -55,6 +79,20 @@ class App(customtkinter.CTk):
         selected_item = self.scrollable_checkbox_frame.get_checked_items()
         if selected_item:
             pyperclip.copy(selected_item[0])
+
+    def delete_selected_items(self):
+        self.scrollable_checkbox_frame.remove_selected_items()
+
+    def toggle_always_on_top(self):
+        self.is_always_on_top = not self.is_always_on_top
+        self.wm_attributes("-topmost", self.is_always_on_top)
+        if self.is_always_on_top:
+            toggle_text = "Toggle Always Off Top"
+        else:
+            toggle_text = "Toggle Always On Top"
+        self.toggle_top_button.configure(text=toggle_text)
+
+
 
 
 if __name__ == "__main__":
